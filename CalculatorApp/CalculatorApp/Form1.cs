@@ -8,197 +8,121 @@ namespace CalculatorApp
 {
     public partial class Form1 : Form
     {
-        /// <summary>
-        /// 最初の値を保持する変数
-        /// </summary>
+        /// <summary>最初の値を保持する変数</summary>
         private decimal FirstValue = 0;
 
-        /// <summary>
-        /// 2番目の値を保持する変数
-        /// </summary>
+        /// <summary>2番目の値を保持する変数</summary>
         private decimal SecondValue = 0;
 
-        /// <summary>
-        /// テキストボックスの上書きモードを示すフラグ
-        /// </summary>
+        /// <summary>テキストボックスの上書きモードを示すフラグ</summary>
         private bool TextOverwrite = false;
 
-        /// <summary>
-        /// 小数点が入力されているかを示すフラグ。
-        /// </summary>
+        /// <summary>小数点が入力されているかを示すフラグ</summary>
         private bool NumDot = false;
 
-        /// <summary>
-        /// 加算演算子の記号
-        /// </summary>
+        /// <summary>加算演算子の記号</summary>
         private const string AddSymbol = "+";
 
-        /// <summary>
-        /// 減算演算子の記号
-        /// </summary>
+        /// <summary>減算演算子の記号</summary>
         private const string SubtractSymbol = "-";
 
-        /// <summary>
-        /// 乗算演算子の記号
-        /// </summary>
+        /// <summary>乗算演算子の記号</summary>
         private const string MultiplySymbol = "×";
 
-        /// <summary>
-        /// 除算演算子の記号</summary>
+        /// <summary>除算演算子の記号</summary>
         private const string DivideSymbol = "÷";
 
-        /// <summary>
-        /// 等号演算子の記号
-        /// </summary>
+        /// <summary>等号演算子の記号</summary>
         private const string EqualSymbol = "=";
 
-        /// <summary>
-        /// 初期値:0
-        /// </summary>
+        /// <summary>初期値:0</summary>
         private const decimal InitialValue = 0m;
 
-        /// <summary>
-        /// 表示値:0
-        /// </summary>
+        /// <summary>表示値:0</summary>
         private const string ZeroValue = "0";
 
-        /// <summary>
-        /// ％を小数に変換する乗数
-        /// </summary>
+        /// <summary>％を小数に変換する乗数</summary>
         private const decimal PercentMultiplier = 0.01m;
 
-        /// <summary>
-        /// エラーメッセージフォントサイズ
-        /// </summary>
+        /// <summary>エラーメッセージフォントサイズ</summary>
         private const float ErrorFontSize = 20.0f;
 
-        /// <summary>
-        /// オーバフローが発生したときのエラーメッセージ
-        /// </summary>
+        /// <summary>オーバフローが発生したときのエラーメッセージ</summary>
         private const string ErrMsgOverflow = "計算範囲を超えました";
 
-        /// <summary>
-        /// 0除算が発生したときのエラーメッセージ
-        /// </summary>
+        /// <summary>0除算が発生したときのエラーメッセージ</summary>
         private const string ErrMsgDivZero = "0で割ることはできません";
 
-        /// <summary>
-        /// 0÷0が行われた時のエラーメッセージ
-        /// </summary>
-        private const string ErrMsgUndefined = "結果が定義されていません"; 
+        /// <summary>0÷0が行われた時のエラーメッセージ</summary>
+        private const string ErrMsgUndefined = "結果が定義されていません";
 
-        /// <summary>
-        /// サインチェンジキーを入力した際に表示される途中結果表示欄のnegate
-        /// </summary>
+        /// <summary>サインチェンジ表示用関数名</summary>
         private const string NegateFuncName = "negate";
 
-		private bool isNegated = false;
+        private bool isNegated = false;
 
-        /// <summary>
-        /// 表示桁数
-        /// </summary>
+        /// <summary>表示桁数（整数部上限）</summary>
         private const int DisplayMaxIntegerDigits = 16;
 
-        /// <summary>
-        /// 0.から始まる場合の表示桁数
-        /// </summary>
+        /// <summary>0.から始まる場合の表示桁数</summary>
         private const int DisplayMaxFractionDigitsLeadingZero = 17;
 
-        /// <summary>
-        /// 計算結果表示欄の基準フォントサイズ
-        /// </summary>
-        private const float WinResultBaseSize = 36f; 
+        /// <summary>計算結果表示欄の基準フォントサイズ</summary>
+        private const float WinResultBaseSize = 36f;
 
-        /// <summary>
-        /// 途中計算結果欄の基準フォントサイズ
-        /// </summary>
-        private const float WinExprBaseSize = 10f;    
+        /// <summary>途中計算結果欄の基準フォントサイズ</summary>
+        private const float WinExprBaseSize = 10f;
 
-        /// <summary>
-        /// フォントの下限サイズ
-        /// </summary>
-        private const float WinMinFontSize = 14f;      
+        /// <summary>フォントの下限サイズ</summary>
+        private const float WinMinFontSize = 14f;
 
-        /// <summary>
-        /// フォントの縮小幅
-        /// </summary>
-        private const float WinFontStep = 0.5f;        
+        /// <summary>フォントの縮小幅</summary>
+        private const float WinFontStep = 0.5f;
 
-        /// <summary>
-        /// 計算結果表示欄の現在のフォントサイズ
-        /// </summary>
-        private float defaultFontSize;        
-      
-        /// <summary>
-        /// 途中計算表示欄の現在のフォントサイズ
-        /// </summary>
-        private float defaultExpressionFontSize;  
-  
-        /// <summary>
-        /// エラー判定フラグ
-        /// </summary>
+        /// <summary>計算結果表示欄の現在のフォントサイズ</summary>
+        private float defaultFontSize;
+
+        /// <summary>途中計算表示欄の現在のフォントサイズ</summary>
+        private float defaultExpressionFontSize;
+
+        /// <summary>エラー判定フラグ</summary>
         private bool IsErrorState = false;
 
-		/// <summary>
-		/// 現在の表示内容をクリアして新しい値を入力するかどうかを示すフラグ
-		/// </summary>
+        /// <summary>現在の表示内容をクリアして新しい値を入力するかどうか</summary>
         private bool IsClearEntry = false;
 
-		/// <summary>
-		/// 電卓の画面に現在表示されている数値を保持
-		/// </summary>
+        /// <summary>画面に現在表示されている数値</summary>
         private decimal displayValue = InitialValue;
 
-        /// <summary>
-        /// サインチェンジキーを押したときの、末端のゼロや小数点の状態を保持するか判定するためのフラグ
-        /// </summary>
-        private bool preserveFormatOnToggle = false;    
-		
-		/// <summary>
-		/// 入力した文字列を保持
-		/// </summary>
-        private string lastUserTypedRaw = ZeroValue;      
+        /// <summary>±時に末端ゼロ/小数点などの見た目を保持するか</summary>
+        private bool preserveFormatOnToggle = false;
 
-		/// <summary>
-		/// 直前の操作がパーセントキーだったかどうかを示すフラグ
-		/// </summary>
+        /// <summary>入力した生文字列を保持</summary>
+        private string lastUserTypedRaw = ZeroValue;
+
+        /// <summary>直前の操作が%だったか</summary>
         private bool lastActionWasPercent = false;
 
-        /// <summary>
-		/// エラー時に操作無効なキー
-        /// </summary>
+        /// <summary>エラー時に操作無効なキー群</summary>
         private Button[] DisabledButtonsOnError;
 
-        /// <summary>
-        /// 
-        /// </summary>
         private bool clearedExprAfterEqual = false;
 
-		/// <summary>
-		/// 演算子の種類を定義する列挙型
-		/// </summary>
+        /// <summary>演算子の種類</summary>
         private enum OperatorType
         {
-            /// <summary>演算なし</summary>
             NON,
-            /// <summary>加算</summary>
             ADD,
-            /// <summary>減算</summary>
             SUBTRACT,
-            /// <summary>乗算</summary>
             MULTIPLY,
-            /// <summary>除算</summary>
             DIVIDE,
-            /// <summary>パーセント</summary>
             PERCENT
         }
 
-        /// <summary>現在の演算子種別を保持する変数</summary>
+        /// <summary>現在の演算子種別</summary>
         private OperatorType mType = OperatorType.NON;
 
-        /// <summary>
-        /// フォームのコンストラクタ
-        /// </summary>
+        /// <summary>フォームのコンストラクタ</summary>
         public Form1()
         {
             InitializeComponent();
@@ -217,11 +141,7 @@ namespace CalculatorApp
             };
         }
 
-		/// <summary>
-		/// フォームの初期化処理
-		/// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>フォーム初期化</summary>
         private void Form1_Load(object sender, EventArgs e)
         {
             textResult.Text = ZeroValue;
@@ -230,76 +150,45 @@ namespace CalculatorApp
             textResult.Font = new Font(textResult.Font.FontFamily, WinResultBaseSize, textResult.Font.Style);
             textExpression.Font = new Font(textExpression.Font.FontFamily, WinExprBaseSize, textExpression.Font.Style);
 
-            // 基準サイズの保持
             defaultFontSize = textResult.Font.Size;
             defaultExpressionFontSize = textExpression.Font.Size;
 
-			// 計算結果表示欄設定（読み取り専用、右揃え、ボーダースタイルなし）
             textResult.ReadOnly = true;
             textResult.TextAlign = HorizontalAlignment.Right;
             textResult.BorderStyle = BorderStyle.None;
 
-			// 途中結果表示欄設定（読み取り専用、右揃え、ボーダースタイルなし）
             textExpression.ReadOnly = true;
             textExpression.TextAlign = HorizontalAlignment.Right;
             textExpression.BorderStyle = BorderStyle.None;
         }
 
-       
-        /// <summary>
-		/// 結果表示欄のフォントサイズを初期化
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>結果欄のオートフィット</summary>
         private void textResult_TextChanged(object sender, EventArgs e)
         {
             AutoFitResultFont();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
         private void textExpression_TextChanged(object sender, EventArgs e)
         {
-            
-         
         }
 
-        /// <summary>
-        /// 数字ボタン押下時のイベントハンドラー
-		/// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>数字ボタン</summary>
         private void btnNum_Click(object sender, EventArgs e)
         {
             Button btn = sender as Button;
-            if (btn == null)
-            {
-                return;
-            }
-            if (IsError())
-            {
-                ResetCalculatorState();
-            }
+            if (btn == null) return;
+            if (IsError()) ResetCalculatorState();
             OnDigitButton(btn.Text);
         }
 
-        /// <summary>
-        /// 小数点キー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>小数点ボタン</summary>
         private void btnDot_Click(object sender, EventArgs e)
         {
             HandleInitialState();
             OnDotButton();
         }
 
-        /// <summary>
-        /// 演算子キー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>演算子ボタン</summary>
         private void btnOperation_Click(object sender, EventArgs e)
         {
             Button btn = (Button)sender;
@@ -307,105 +196,58 @@ namespace CalculatorApp
 
             switch (btn.Text)
             {
-                case AddSymbol:
-                    {
-                        op = OperatorType.ADD;
-                        break;
-                    }
-                case SubtractSymbol:
-                    {
-                        op = OperatorType.SUBTRACT;
-                        break;
-                    }
-                case MultiplySymbol:
-                    {
-                        op = OperatorType.MULTIPLY;
-                        break;
-                    }
-                case DivideSymbol:
-                    {
-                        op = OperatorType.DIVIDE;
-                        break;
-                    }
+                case AddSymbol: op = OperatorType.ADD; break;
+                case SubtractSymbol: op = OperatorType.SUBTRACT; break;
+                case MultiplySymbol: op = OperatorType.MULTIPLY; break;
+                case DivideSymbol: op = OperatorType.DIVIDE; break;
             }
             OnOperatorButton(op);
         }
 
-        /// <summary>
-        /// イコールキー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>＝ボタン</summary>
         private void btnEnter_Click(object sender, EventArgs e)
         {
             OnEqualsButton();
         }
 
-        /// <summary>
-        /// ％キー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>％ボタン</summary>
         private void btnPercent_Click(object sender, EventArgs e)
         {
             OnPercentButton();
         }
 
-        /// <summary>
-        /// クリアエントリーキー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>CE</summary>
         private void btnClearEntry_Click(object sender, EventArgs e)
         {
             OnClearEntryButton();
         }
 
-        /// <summary>
-        /// クリアキー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>C</summary>
         private void btnClear_Click(object sender, EventArgs e)
         {
             OnClearButton();
         }
 
-        /// <summary>
-        /// 桁下げキー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>Backspace</summary>
         private void btnBack_Click(object sender, EventArgs e)
         {
             OnBackspaceButton();
         }
 
-        /// <summary>
-        ///サインチェンジキー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>±</summary>
         private void btnTogglesign_Click(object sender, EventArgs e)
         {
             OnToggleSignButton();
         }
 
-        /// <summary>
-        /// 最前面表示キー入力時の処理
-        /// </summary>
-		/// <param name="sender">イベントの発生元</param>
-		/// <param name="e">イベントデータ</param>
+        /// <summary>最前面</summary>
         private void btnTopMost_Click(object sender, EventArgs e)
         {
             this.TopMost = !this.TopMost;
         }
 
-        /// <summary>
-        /// 数字キー入力のメイン処理
-		/// エラー復帰、指数表示からの上書き開始、桁数制御、カンマ付与、
-        /// 「±で末尾ゼロ保持」用の生文字列更新を行う。
-        /// </summary>
+        // ========= 入力系 =========
+
         private void OnDigitButton(string digit)
         {
             HandleInitialState();
@@ -420,19 +262,10 @@ namespace CalculatorApp
             }
 
             string current = textResult.Text.Replace(",", "");
-            if (!IsInputValid(current, digit))
-            {
-                return;
-            }
+            if (!IsInputValid(current, digit)) return;
 
-            if (TextOverwrite)
-            {
-                StartNewNumber(digit);
-            }
-            else
-            {
-                AppendDigit(digit);
-            }
+            if (TextOverwrite) StartNewNumber(digit);
+            else AppendDigit(digit);
 
             UpdateTextResultWithCommas();
             IsClearEntry = false;
@@ -441,20 +274,12 @@ namespace CalculatorApp
             lastUserTypedRaw = textResult.Text.Replace(",", "");
         }
 
-        /// <summary>
-        /// 小数点キー入力のメイン処理
-		/// 0. からの開始、重複小数点抑止、
-        /// 「±で末尾ゼロ保持」用生文字列の更新を行う。
-        /// </summary>
         private void OnDotButton()
         {
             HandleInitialState();
             lastActionWasPercent = false;
 
-            if (NumDot)
-            {
-                return;
-            }
+            if (NumDot) return;
 
             if (TextOverwrite)
             {
@@ -471,9 +296,6 @@ namespace CalculatorApp
             lastUserTypedRaw = textResult.Text.Replace(",", "");
         }
 
-        /// <summary>
-        /// 計算命令キーのメイン処理
-        /// </summary>
         private void OnOperatorButton(OperatorType op)
         {
             if (IsError())
@@ -488,10 +310,7 @@ namespace CalculatorApp
                 {
                     decimal cur = GetCurrentValue();
                     PerformPendingCalculation(cur);
-                    if (IsError())
-                    {
-                        return;
-                    }
+                    if (IsError()) return;
 
                     DisplayNumber(FirstValue, true);
                     mType = op;
@@ -512,7 +331,6 @@ namespace CalculatorApp
                     return;
                 }
 
-                
                 if (TextOverwrite && mType != OperatorType.NON && !ExpressionEndsWithEqual())
                 {
                     mType = op;
@@ -522,10 +340,7 @@ namespace CalculatorApp
                 {
                     decimal currentValue = GetCurrentValue();
                     PerformPendingCalculation(currentValue);
-                    if (IsError())
-                    {
-                        return;
-                    }
+                    if (IsError()) return;
 
                     DisplayNumber(FirstValue, true);
                     mType = op;
@@ -535,7 +350,7 @@ namespace CalculatorApp
                 TextOverwrite = true;
                 NumDot = false;
                 lastActionWasPercent = false;
-                preserveFormatOnToggle = false; 
+                preserveFormatOnToggle = false;
             }
             catch (OverflowException)
             {
@@ -543,27 +358,16 @@ namespace CalculatorApp
             }
         }
 
-        /// <summary>
-        /// イコールキーのメイン処理である。
-        /// 0÷0と0除算 は規定メッセージでエラー化する。
-        /// </summary>
         private void OnEqualsButton()
         {
-            if (ShouldResetOnError())
-            {
-                return;
-            }
+            if (ShouldResetOnError()) return;
 
             try
             {
                 decimal result = ProcessEqualsLogic();
-                if (IsError())
-                {
-                    return;
-                }
+                if (IsError()) return;
                 DisplayNumber(result, true);
 
-              
                 preserveFormatOnToggle = false;
                 lastActionWasPercent = false;
             }
@@ -578,35 +382,29 @@ namespace CalculatorApp
         }
 
         /// <summary>
-        /// ％キーのメイン処理である。単項%（/100）と、演算子右辺%（加減は A*(B/100)、乗除は B/100）に対応する。
-        /// 直後は演算子押下で確定するようフラグを設定する。
+        /// ％キー：文脈依存。演算子あり時は右辺％（+/- は A*(B/100)、×/÷ は B/100）。
+        /// 「＝直後」の特例：R% of R（R*(R/100)）。それ以外の単独％は無効。
         /// </summary>
         private void OnPercentButton()
         {
-            if (ShouldResetOnError())
-            {
-                return;
-            }
+            if (ShouldResetOnError()) return;
 
+            // ＝直後の特例（例：10+10= → 20、% → 4）
             if (ExpressionEndsWithEqual())
             {
                 try
                 {
                     decimal r = GetCurrentValue();          // R
-                    decimal v = r * CalculatePercent(r);    // R * (R/100)
+                    decimal v = r * CalculatePercent(r);    // R*(R/100)
 
-                    // 計算結果を確定状態としてセット
+                    // 計算状態を確定
                     FirstValue = v;
                     SecondValue = InitialValue;
                     mType = OperatorType.NON;
 
-                    // 表示は上書き開始モードで更新（次の数値入力で新規入力に）
+                    // 表示：値のみ（式欄にも "=" を付けない仕様）
                     DisplayNumber(v, true);
-
-                    // 式欄も「値のみ」にする（== を付けない仕様）
                     textExpression.Text = FormatNumberForExpression(v);
-                    // ※ もし「4 =」にしたければ上の行を次の行に変更:
-                    // textExpression.Text = string.Format("{0} {1}", FormatNumberForExpression(v), EqualSymbol);
 
                     lastActionWasPercent = true;
                     preserveFormatOnToggle = false;
@@ -619,36 +417,56 @@ namespace CalculatorApp
                 }
             }
 
-            // ② 演算子ありの通常％（+/- は A*(B/100)、×/÷ は B/100）
+            // 演算子あり：右辺％
             if (mType != OperatorType.NON)
             {
-                // 演算子直後で右辺未入力なら 0% とみなす
                 decimal rhs = TextOverwrite ? 0m : GetCurrentValue();
-
                 decimal percentValue = CalculatePercent(rhs); // B% = B/100
-                UpdatePercentDisplay(percentValue);           // 式と表示を更新
+                UpdatePercentDisplay(percentValue);           // 表示と式の更新
 
                 lastActionWasPercent = true;
                 preserveFormatOnToggle = false;
                 return;
             }
 
-            // ③ それ以外（完全な単独％）は無効
+            // それ以外（単独％）は無効
             return;
         }
 
-
-
-        /// <summary>
-        /// クリアエントリーキー入力の処理。式は維持し、表示を 0 に戻す。
-        /// </summary>
+        /// <summary>CE：仕様差分の解消</summary>
         private void OnClearEntryButton()
         {
-            if (ShouldResetOnError())
+            if (ShouldResetOnError()) return;
+
+            string expr = (textExpression.Text != null ? textExpression.Text.Trim() : string.Empty);
+
+            // 「＝直後」の特別扱い
+            if (ExpressionEndsWithEqual())
             {
+                // 二項演算の結果（例: "100 + 20 ="）→ CE で全部 0（C と同等の見え方）
+                if (HasBinaryOperatorInExpression(expr))
+                {
+                    ResetCalculatorState();
+                    SetButtonsEnabled(true);
+                    return;
+                }
+
+                // 単独数値の結果（例: "100 ="）→ 式は残し、表示だけ 0
+                textResult.Text = ZeroValue;
+                TextOverwrite = true;
+                NumDot = false;
+
+                FirstValue = InitialValue;
+                SecondValue = InitialValue;
+                mType = OperatorType.NON;
+
+                preserveFormatOnToggle = false;
+                lastUserTypedRaw = ZeroValue;
+                lastActionWasPercent = false;
                 return;
             }
 
+            // それ以外：現在のエントリのみ 0（式は維持）
             IsClearEntry = true;
             textResult.Text = ZeroValue;
             TextOverwrite = true;
@@ -659,40 +477,29 @@ namespace CalculatorApp
             lastActionWasPercent = false;
         }
 
-        /// <summary>
-        /// クリアキーの処理。全状態を初期化する。
-        /// </summary>
+        /// <summary>C：全クリア</summary>
         private void OnClearButton()
         {
             ResetAllState();
         }
 
-        /// <summary>
-        /// 桁下げキー入力の処理
-        /// 末尾1文字削除を行う。
-        /// </summary>
+        /// <summary>Backspace：末尾1文字削除</summary>
         private void OnBackspaceButton()
         {
-            if (ShouldResetOnError())
-            {
-                return;
-            }
+            if (ShouldResetOnError()) return;
 
             if (ExpressionEndsWithEqual())
             {
                 textExpression.Text = "";
-                TextOverwrite = true;     
+                TextOverwrite = true;
                 NumDot = false;
                 preserveFormatOnToggle = false;
                 lastActionWasPercent = false;
                 clearedExprAfterEqual = true;
-                return;                       
-            }
-
-            if (clearedExprAfterEqual)
-            {
                 return;
             }
+
+            if (clearedExprAfterEqual) return;
 
             // 指数表示中は新規入力開始扱い
             if (IsExponentDisplay())
@@ -707,67 +514,48 @@ namespace CalculatorApp
                 return;
             }
 
-            if (TextOverwrite)
-            {
-                return;
-            }
+            if (TextOverwrite) return;
 
             HandleBackspace();
             UpdateTextResultWithCommas();
 
-           
             preserveFormatOnToggle = true;
             lastUserTypedRaw = textResult.Text.Replace(",", "");
             lastActionWasPercent = false;
         }
 
-        /// <summary>
-        /// サインチェンジキーの処理。ユーザー入力の見た目保持（末尾ゼロ維持）と、
-        /// ＝直後の negate(...) 表記更新に対応する。
-        /// </summary>
+        /// <summary>±の処理（見た目保持／=直後は negate(...) 表示）</summary>
         private void OnToggleSignButton()
         {
-            if (ShouldResetOnError())
-            {
-                return;
-            }
-
-            if (string.IsNullOrEmpty(textResult.Text))
-            {
-                return;
-            }
+            if (ShouldResetOnError()) return;
+            if (string.IsNullOrEmpty(textResult.Text)) return;
 
             if (preserveFormatOnToggle && !IsExponentDisplay())
             {
                 string raw = textResult.Text.Replace(",", "");
-                raw = ToggleSignRaw(raw);               
-                SetTextFromRawPreservingCommas(raw);   
+                raw = ToggleSignRaw(raw);
+                SetTextFromRawPreservingCommas(raw);
 
-                
                 TextOverwrite = false;
                 NumDot = (raw.IndexOf('.') >= 0);
 
-                
                 UpdateExpressionForToggleSign();
 
-               
                 lastUserTypedRaw = raw;
                 lastActionWasPercent = false;
                 return;
             }
 
             // 計算表示のときは数値反転
-            ToggleSign();                 
+            ToggleSign();
             UpdateExpressionForToggleSign();
 
             preserveFormatOnToggle = false;
             lastActionWasPercent = false;
         }
 
+        // ========= ヘルパー =========
 
-        /// <summary>
-        /// 新しい数値入力を開始する。上書きモードを解除し、小数点フラグを更新。
-        /// </summary>
         private void StartNewNumber(string digit)
         {
             textResult.Text = digit;
@@ -775,17 +563,11 @@ namespace CalculatorApp
             NumDot = (digit == ".");
         }
 
-        /// <summary>
-        /// 既存の入力の末尾に数字を追加する。
-        /// </summary>
         private void AppendDigit(string digit)
         {
             textResult.Text += digit;
         }
 
-        /// <summary>
-        /// 入力の妥当性を検証する。整数/小数の最大桁数、先頭0の扱いの抑止などを行う。
-        /// </summary>
         private bool IsInputValid(string currentText, string digit)
         {
             bool startsWithZeroDot = currentText.StartsWith("0.") || currentText.StartsWith("-0.");
@@ -794,85 +576,37 @@ namespace CalculatorApp
             string nextText = TextOverwrite ? digit : currentText + digit;
             int nextLength = nextText.Replace(".", "").Replace("-", "").Length;
 
-            if (nextLength > maxDigits)
-            {
-                return false;
-            }
+            if (nextLength > maxDigits) return false;
 
-            if (!TextOverwrite && currentText == ZeroValue && digit == ZeroValue && !NumDot)
-            {
-                return false;
-            }
+            if (!TextOverwrite && currentText == ZeroValue && digit == ZeroValue && !NumDot) return false;
 
             return true;
         }
 
-
-        /// <summary>
-        /// 指定された演算子タイプに基づき、演算子の記号を返す。
-        /// </summary>
-        /// <param name="type">演算子のタイプである。</param>
-        /// <returns>指定された演算子タイプに対応する記号である。</returns>
         private string GetOperatorSymbol(OperatorType type)
         {
             switch (type)
             {
-                case OperatorType.ADD:
-                    {
-                        return AddSymbol;
-                    }
-                case OperatorType.SUBTRACT:
-                    {
-                        return SubtractSymbol;
-                    }
-                case OperatorType.MULTIPLY:
-                    {
-                        return MultiplySymbol;
-                    }
-                case OperatorType.DIVIDE:
-                    {
-                        return DivideSymbol;
-                    }
-                default:
-                    {
-                        return string.Empty;
-                    }
+                case OperatorType.ADD: return AddSymbol;
+                case OperatorType.SUBTRACT: return SubtractSymbol;
+                case OperatorType.MULTIPLY: return MultiplySymbol;
+                case OperatorType.DIVIDE: return DivideSymbol;
+                default: return string.Empty;
             }
         }
 
-        /// <summary>
-        /// 左右と演算子種別から結果を計算する（÷0 の例外処理は呼び出し側で行う）。
-        /// </summary>
         private decimal Calculate(decimal left, decimal right, OperatorType type)
         {
             switch (type)
             {
-                case OperatorType.ADD:
-                    {
-                        return left + right;
-                    }
-                case OperatorType.SUBTRACT:
-                    {
-                        return left - right;
-                    }
-                case OperatorType.MULTIPLY:
-                    {
-                        return left * right;
-                    }
-                case OperatorType.DIVIDE:
-                    {
-                        return left / right;
-                    }
-                default:
-                    {
-                        return right;
-                    }
+                case OperatorType.ADD: return left + right;
+                case OperatorType.SUBTRACT: return left - right;
+                case OperatorType.MULTIPLY: return left * right;
+                case OperatorType.DIVIDE: return left / right;
+                default: return right;
             }
         }
 
-        /// <summary>
-        /// 保留中の演算を解決する。未選択なら左辺を現在値に更新し、÷0/0÷0 はここでエラー化する。
-        /// </summary>
         private void PerformPendingCalculation(decimal currentValue)
         {
             if (ExpressionEndsWithEqual() || mType == OperatorType.NON)
@@ -883,14 +617,8 @@ namespace CalculatorApp
             {
                 if (mType == OperatorType.DIVIDE && currentValue == InitialValue)
                 {
-                    if (FirstValue == InitialValue)
-                    {
-                        SetErrorState(ErrMsgUndefined);
-                    }
-                    else
-                    {
-                        SetErrorState(ErrMsgDivZero);
-                    }
+                    if (FirstValue == InitialValue) { SetErrorState(ErrMsgUndefined); }
+                    else { SetErrorState(ErrMsgDivZero); }
                     return;
                 }
 
@@ -899,15 +627,12 @@ namespace CalculatorApp
             }
         }
 
-        /// <summary>
-        /// 途中式表示を更新する
-        /// </summary>
+        /// <summary>途中式表示更新（negate(...) の維持に対応）</summary>
         private void UpdateExpressionDisplay(decimal value, OperatorType type)
         {
             string op = GetOperatorSymbol(type);
             string currentExpr = (textExpression.Text != null ? textExpression.Text.Trim() : string.Empty);
 
-            // negate(...) を維持（= が付いていない状態）
             if (!string.IsNullOrEmpty(currentExpr) &&
                 !currentExpr.EndsWith(EqualSymbol) &&
                 currentExpr.StartsWith(NegateFuncName + "(", StringComparison.Ordinal))
@@ -916,24 +641,15 @@ namespace CalculatorApp
                 return;
             }
 
-            // 通常表示
             textExpression.Text = string.Format("{0} {1}", FormatNumberForExpression(value), op);
         }
 
-
-        /// <summary>
-        ///イコールキーの処理
-        /// </summary>
-        /// <summary>
-        /// イコールキーのメイン処理である。
-        /// 0÷0 と 0 での除算は規定メッセージで例外化する。
-        /// </summary>
+        /// <summary>＝処理本体（negate(...) を維持したまま右辺と = を付ける）</summary>
         private decimal ProcessEqualsLogic()
         {
             decimal currentValue = GetCurrentValue();
             bool isFirstEqual = !ExpressionEndsWithEqual();
 
-            // 演算子未選択ならそのまま表示
             if (mType == OperatorType.NON)
             {
                 SecondValue = currentValue;
@@ -957,25 +673,15 @@ namespace CalculatorApp
                 right = SecondValue;
             }
 
-            // ゼロ除算チェック
             if (mType == OperatorType.DIVIDE && right == InitialValue)
             {
-                if (left == InitialValue)
-                {
-                    throw new InvalidOperationException(ErrMsgUndefined);   // 0 ÷ 0
-                }
-                else
-                {
-                    throw new InvalidOperationException(ErrMsgDivZero);     // x ÷ 0
-                }
+                if (left == InitialValue) throw new InvalidOperationException(ErrMsgUndefined);
+                else throw new InvalidOperationException(ErrMsgDivZero);
             }
 
             decimal result = Calculate(left, right, mType);
             FirstValue = result;
 
-            // --- 式表示の更新（Windows標準風） ---
-            // 「negate(...)」が式欄に残っていて、かつ '=' が付いていない場合は、
-            // その文字列を左辺として維持しつつ、右辺と '=' を付ける。
             string opSym = GetOperatorSymbol(mType);
             string leftExpr = FormatNumberForExpression(left);
             string rightExpr = FormatNumberForExpression(right);
@@ -985,20 +691,17 @@ namespace CalculatorApp
                 !curr.EndsWith(EqualSymbol) &&
                 curr.StartsWith(NegateFuncName + "(", StringComparison.Ordinal))
             {
-                // 現在が "negate(...) <op>" で止まっているなら右辺を付けて "="
                 if (curr.EndsWith(opSym))
                 {
                     textExpression.Text = curr + " " + rightExpr + " " + EqualSymbol;
                 }
                 else
                 {
-                    // 既に右辺まで入っている場合は "=" だけ付ける（保険）
                     textExpression.Text = curr + " " + EqualSymbol;
                 }
             }
             else
             {
-                // 通常（数値で左・右を描く）
                 textExpression.Text = string.Format("{0} {1} {2} {3}",
                     leftExpr, opSym, rightExpr, EqualSymbol);
             }
@@ -1006,19 +709,12 @@ namespace CalculatorApp
             return result;
         }
 
-
-        /// <summary>
-        /// 現在値を％（/100）へ変換する。
-        /// </summary>
         private decimal CalculatePercent(decimal value)
         {
             return value * PercentMultiplier;
         }
 
-        /// <summary>
-        /// ％の表示と式を更新する。加減算は A*(B/100)、乗除算は B/100 として扱う。
-        /// 表示は編集継続可能な状態にする。
-        /// </summary>
+        /// <summary>％の表示と式更新（+/- は A*(B/100)、×/÷ は B/100）</summary>
         private void UpdatePercentDisplay(decimal percentValue)
         {
             decimal previousValue = FirstValue;
@@ -1026,7 +722,7 @@ namespace CalculatorApp
 
             if (mType == OperatorType.ADD || mType == OperatorType.SUBTRACT)
             {
-                calculatedValue = previousValue * percentValue; 
+                calculatedValue = previousValue * percentValue; // A*(B/100)
                 textExpression.Text = string.Format("{0} {1} {2}",
                     FormatNumberForExpression(previousValue),
                     GetOperatorSymbol(mType),
@@ -1034,20 +730,16 @@ namespace CalculatorApp
             }
             else
             {
-                calculatedValue = percentValue; // B% = B/100
+                calculatedValue = percentValue; // B/100
                 textExpression.Text = string.Format("{0} {1} {2}",
                     FormatNumberForExpression(previousValue),
                     GetOperatorSymbol(mType),
                     FormatNumberForExpression(calculatedValue));
             }
 
-
             DisplayNumber(calculatedValue, false);
         }
 
-        /// <summary>
-        /// 結果表示の末尾 1 文字を削除する。空や単独の「-」になった場合は 0 に戻す。
-        /// </summary>
         private void HandleBackspace()
         {
             string currentText = textResult.Text.Replace(",", "");
@@ -1073,114 +765,70 @@ namespace CalculatorApp
             }
         }
 
-        /// <summary>
-        /// 数値として符号反転を行い表示を更新
-        /// </summary>
         private void ToggleSign()
         {
             displayValue = GetCurrentValue();
             displayValue = -displayValue;
             DisplayNumber(displayValue, false);
-			isNegated = true;
+            isNegated = true;
         }
 
-        /// <summary>
-        /// カンマ無しの文字列の符号のみを反転する
-        /// </summary>
         private string ToggleSignRaw(string raw)
         {
-            if (string.IsNullOrEmpty(raw))
-            {
-                return raw;
-            }
-            if (raw[0] == '-')
-            {
-                return raw.Substring(1);
-            }
+            if (string.IsNullOrEmpty(raw)) return raw;
+            if (raw[0] == '-') return raw.Substring(1);
             return "-" + raw;
         }
 
-        /// <summary>
-        /// 文字列をそのまま結果欄に反映し、カンマ付与を行う。
-        /// </summary>
         private void SetTextFromRawPreservingCommas(string raw)
         {
             textResult.Text = raw;
             UpdateTextResultWithCommas();
         }
 
-        /// <summary>
-        /// イコールキー入力直後の サインチェンジキーを入力したとき negate(...) の入れ子表記で更新する。
-        /// 例）"100 =" → "negate(100) =" → さらに ± → "negate(negate(100)) ="
-        /// </summary>
+        /// <summary>＝直後の ±：negate(...) 表示（= なし）、入れ子も対応</summary>
         private void UpdateExpressionForToggleSign()
         {
             string expr = (textExpression.Text != null ? textExpression.Text.Trim() : string.Empty);
 
-            // 「100 =」 のように = で終わっているとき → negate(100) にして = は付けない
             if (expr.EndsWith(EqualSymbol))
             {
                 int eq = expr.LastIndexOf(EqualSymbol);
                 string body = (eq >= 0 ? expr.Substring(0, eq) : expr).Trim();
-
-                if (string.IsNullOrEmpty(body))
-                {
-                    body = FormatNumberForExpression(FirstValue);
-                }
+                if (string.IsNullOrEmpty(body)) body = FormatNumberForExpression(FirstValue);
 
                 textExpression.Text = NegateFuncName + "(" + body + ")";
                 return;
             }
 
-            // すでに negate(...) 表示中で ± を押した場合は入れ子にする
             if (expr.StartsWith(NegateFuncName + "(", StringComparison.Ordinal))
             {
                 textExpression.Text = NegateFuncName + "(" + expr + ")";
             }
         }
 
-
-        /// <summary>
-        /// 表示の丸め、 カンマ付与 、 状態更新を行う。
-        /// </summary>
         private void DisplayNumber(decimal value, bool overwrite)
         {
             decimal rounded = RoundResult(value);
             textResult.Text = FormatNumberForDisplay(rounded);
             UpdateTextResultWithCommas();
             TextOverwrite = overwrite;
-            NumDot = false; // 上書きモードに入る時は必ず false
+            NumDot = false;
 
-            // 計算由来の表示なので、±の見た目保持はオフ
             preserveFormatOnToggle = false;
             lastUserTypedRaw = textResult.Text.Replace(",", "");
         }
 
-        /// <summary>
-        /// 結果表示の文字列に 3 桁区切りカンマを付与する
-        /// </summary>
         private void UpdateTextResultWithCommas()
         {
-            if (IsError())
-            {
-                return;
-            }
-            if (IsExponentDisplay())
-            {
-                return;
-            }
+            if (IsError()) return;
+            if (IsExponentDisplay()) return;
 
             string currentText = textResult.Text.Replace(",", "");
-            if (string.IsNullOrEmpty(currentText) || currentText == "-" || (currentText == "0" && !NumDot))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(currentText) || currentText == "-" || (currentText == "0" && !NumDot)) return;
 
             bool isNegative = currentText.StartsWith("-");
-            if (isNegative)
-            {
-                currentText = currentText.Substring(1);
-            }
+            if (isNegative) currentText = currentText.Substring(1);
 
             int dotIndex = currentText.IndexOf('.');
             string integerPart = currentText;
@@ -1200,35 +848,22 @@ namespace CalculatorApp
                     string formattedInteger = integerValue.ToString("#,##0", CultureInfo.InvariantCulture);
                     string newText = formattedInteger;
 
-                    if (dotIndex != -1)
-                    {
-                        newText += "." + decimalPart;
-                    }
-                    if (isNegative)
-                    {
-                        newText = "-" + newText;
-                    }
+                    if (dotIndex != -1) newText += "." + decimalPart;
+                    if (isNegative) newText = "-" + newText;
 
                     textResult.Text = newText;
                 }
             }
             catch (FormatException)
             {
-                // 何もしない
             }
         }
 
-        /// <summary>
-        /// 途中式用の数値整形を行う。
-        /// </summary>
         private string FormatNumberForExpression(decimal value)
         {
             return FormatNumberForDisplay(value);
         }
 
-        /// <summary>
-        /// 指数表記の整形を行う。指数は小文字 e、不要な 0/小数点を整理する。
-        /// </summary>
         private string FormatExponential(decimal value)
         {
             string gFormat = value.ToString("G15", CultureInfo.InvariantCulture);
@@ -1240,77 +875,47 @@ namespace CalculatorApp
             string[] parts = expString.Split(new char[] { 'e' });
 
             string mantissa = parts[0].TrimEnd('0');
-            if (mantissa.EndsWith("."))
-            {
-                mantissa = mantissa.TrimEnd('.');
-            }
-            if (!mantissa.Contains("."))
-            {
-                mantissa += ".";
-            }
+            if (mantissa.EndsWith(".")) mantissa = mantissa.TrimEnd('.');
+            if (!mantissa.Contains(".")) mantissa += ".";
 
             string exponent = Regex.Replace(parts[1], @"^(\+|-)(0)(\d+)", "$1$3");
             return mantissa + "e" + exponent;
         }
 
-        /// <summary>
-        /// 数値の大きさが表示可能な桁数を超える場合、指数表記に変換する
-        /// </summary>
         private string FormatNumberForDisplay(decimal value)
         {
             decimal abs = Math.Abs(value);
-            if (abs == 0m)
-            {
-                return ZeroValue;
-            }
+            if (abs == 0m) return ZeroValue;
 
-           
             string fixedStr = value.ToString("0.#############################", CultureInfo.InvariantCulture);
 
             if (abs >= 1m)
             {
-               
                 int dot = fixedStr.IndexOf('.');
                 bool neg = (fixedStr[0] == '-');
                 int intLen = (dot >= 0 ? dot : fixedStr.Length) - (neg ? 1 : 0);
 
-                if (intLen > DisplayMaxIntegerDigits)
-                {
-                    return FormatExponential(value);
-                }
+                if (intLen > DisplayMaxIntegerDigits) return FormatExponential(value);
                 return fixedStr;
             }
             else
             {
-                
                 int dot = fixedStr.IndexOf('.');
                 int fracLen = (dot >= 0) ? (fixedStr.Length - dot - 1) : 0;
 
-                if (fracLen > DisplayMaxFractionDigitsLeadingZero)
-                {
-                    return FormatExponential(value);
-                }
+                if (fracLen > DisplayMaxFractionDigitsLeadingZero) return FormatExponential(value);
                 return fixedStr;
             }
         }
 
-        /// <summary>
-        /// 現在の表示文字列を decimal に変換する
-        /// </summary>
         private decimal GetCurrentValue()
         {
             return ParseDisplayToDecimal(textResult.Text);
         }
 
-        /// <summary>
-        /// 表示文字列を decimal に変換する
-        /// </summary>
         private decimal ParseDisplayToDecimal(string text)
         {
-            if (string.IsNullOrEmpty(text))
-            {
-                return InitialValue;
-            }
+            if (string.IsNullOrEmpty(text)) return InitialValue;
 
             string s = text.Replace(",", "");
             decimal dv;
@@ -1320,33 +925,19 @@ namespace CalculatorApp
                 double dd;
                 if (double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out dd))
                 {
-                    try
-                    {
-                        return (decimal)dd;
-                    }
-                    catch
-                    {
-                        return InitialValue;
-                    }
+                    try { return (decimal)dd; } catch { return InitialValue; }
                 }
                 return InitialValue;
             }
 
-            if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out dv))
-            {
-                return dv;
-            }
+            if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out dv)) return dv;
             return InitialValue;
         }
 
-        /// <summary>
-		/// 数値の絶対値に応じて計算結果を丸める
-        /// </summary>
         private decimal RoundResult(decimal value)
         {
             decimal abs = Math.Abs(value);
 
-         
             if (abs > 0m && abs < 1m)
             {
                 return Math.Round(value, 17, MidpointRounding.AwayFromZero);
@@ -1367,35 +958,22 @@ namespace CalculatorApp
             return value;
         }
 
-
-        /// <summary>
-        /// エラー状態かどうかを返す。
-        /// </summary>
         private bool IsError()
         {
             return IsErrorState;
         }
 
-        /// <summary>
-        /// 式表示が ＝ で終わっているか判定する
-        /// </summary>
         private bool ExpressionEndsWithEqual()
         {
             return textExpression.Text.Length > 0 && textExpression.Text.EndsWith(EqualSymbol);
         }
 
-        /// <summary>
-        /// 現在の結果表示が指数表記か判定する。
-        /// </summary>
         private bool IsExponentDisplay()
         {
             string t = textResult.Text;
             return (t.IndexOf('e') >= 0 || t.IndexOf('E') >= 0);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
         private bool ShouldResetOnError()
         {
             if (IsErrorState)
@@ -1406,13 +984,9 @@ namespace CalculatorApp
             return false;
         }
 
-        /// <summary>
-		/// 結果表示欄のフォントサイズを初期化
-        /// </summary>
         private void AutoFitResultFont()
         {
-            float size = defaultFontSize; // 基準サイズ
-
+            float size = defaultFontSize;
             FontFamily family = textResult.Font.FontFamily;
             FontStyle style = textResult.Font.Style;
 
@@ -1446,9 +1020,6 @@ namespace CalculatorApp
             }
         }
 
-        /// <summary>
-        /// エラー時に一部ボタンの活性/非活性をまとめて切り替える。
-        /// </summary>
         private void SetButtonsEnabled(bool enabled)
         {
             foreach (Button btn in DisabledButtonsOnError)
@@ -1457,27 +1028,18 @@ namespace CalculatorApp
             }
         }
 
-        /// <summary>
-        /// エラー状態を設定し、メッセージ表示・フォントサイズ調整・ボタン無効化を行う。
-        /// </summary>
         private void SetErrorState(string message)
         {
             textResult.Text = message;
 
             float sz = ErrorFontSize;
-            if (sz < WinMinFontSize)
-            {
-                sz = WinMinFontSize;
-            }
+            if (sz < WinMinFontSize) sz = WinMinFontSize;
             textResult.Font = new Font(textResult.Font.FontFamily, sz, textResult.Font.Style);
 
             IsErrorState = true;
             SetButtonsEnabled(false);
         }
 
-        /// <summary>
-        /// 入力開始前の状態を整える。エラー中や ＝直後の場合は状態を初期化する。
-        /// </summary>
         private void HandleInitialState()
         {
             if (IsErrorState || ExpressionEndsWithEqual())
@@ -1487,18 +1049,12 @@ namespace CalculatorApp
             }
         }
 
-        /// <summary>
-        /// 全体のリセット処理である。計算状態と UI 状態を初期化し、ボタンを活性化する。
-        /// </summary>
         private void ResetAllState()
         {
             ResetCalculatorState();
             SetButtonsEnabled(true);
         }
 
-        /// <summary>
-        /// 計算機内部状態と表示、フォントの初期化を行う
-        /// </summary>
         private void ResetCalculatorState()
         {
             FirstValue = InitialValue;
@@ -1517,15 +1073,25 @@ namespace CalculatorApp
             lastActionWasPercent = false;
             clearedExprAfterEqual = false;
 
-            // フォントを基準サイズに戻す
-           
             textResult.Font = new Font(textResult.Font.FontFamily, defaultFontSize, textResult.Font.Style);
-
-           
             textExpression.Font = new Font(textExpression.Font.FontFamily, defaultExpressionFontSize, textExpression.Font.Style);
 
-			//結果表示欄のフォントサイズを初期化
             AutoFitResultFont();
+        }
+
+        // ========== 追加ヘルパー：式に二項演算子が含まれるか ==========
+        private bool HasBinaryOperatorInExpression(string expr)
+        {
+            if (string.IsNullOrEmpty(expr)) return false;
+            int eq = expr.LastIndexOf(EqualSymbol);
+            string body = (eq >= 0 ? expr.Substring(0, eq) : expr);
+
+            if (body.IndexOf(" " + AddSymbol + " ", StringComparison.Ordinal) >= 0) return true;
+            if (body.IndexOf(" " + SubtractSymbol + " ", StringComparison.Ordinal) >= 0) return true;
+            if (body.IndexOf(" " + MultiplySymbol + " ", StringComparison.Ordinal) >= 0) return true;
+            if (body.IndexOf(" " + DivideSymbol + " ", StringComparison.Ordinal) >= 0) return true;
+
+            return false;
         }
     }
 }
