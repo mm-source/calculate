@@ -1,0 +1,353 @@
+using System;
+using System.Windows.Forms;
+using System.Drawing;
+using System.Globalization;
+
+namespace CalculatorApp
+{
+    internal static class Constants
+    {
+        internal static class FontSize
+        {
+            internal const float ERROR_MESSAGE = 20.0f;
+            internal const float RESULT_DISPLAY_BASE = 36f;
+            internal const float EXPRESSION_DISPLAY_BASE = 10f;
+            internal const float MIN_LIMIT = 14f;
+            internal const float REDUCTION_STEP = 0.5f;
+            internal const float SIZE_EPSILON = 0.1f;
+        }
+
+        internal static class Symbol
+        {
+            internal const string ADD = "＋";
+            internal const string SUBTRACT = "－";
+            internal const string MULTIPLY = "×";
+            internal const string DIVIDE = "÷";
+            internal const string EQUAL = "=";
+        }
+
+        internal static class Numeric
+        {
+            internal const decimal INITIAL_VALUE = 0m;
+            internal const string ZERO_VALUE = "0";
+            internal const decimal PERCENT_MULTIPLY = 0.01m;
+            internal const int MAX_INTEGER_DISPLAY_DIGITS = 16;
+            internal const int MAX_FRACTION_DISPLAY_DIGITS_LEADING_ZERO = 17;
+        }
+
+        internal static class ErrorMessage
+        {
+            internal const string OVERFLOW = "計算範囲を超えました";
+            internal const string DIVIDE_BY_ZERO = "0で割ることはできません";
+            internal const string UNDEFINED = "結果が定義されていません";
+        }
+
+        internal static class SpecialDisplay
+        {
+            internal const string NEGATE_FUNCTION = "negate";
+        }
+    }
+
+    public partial class Form1 : Form
+    {
+        private decimal firstValue = Constants.Numeric.INITIAL_VALUE;
+        private decimal secondValue = Constants.Numeric.INITIAL_VALUE;
+        private bool textOverwrite = false;
+        private bool numDot = false;
+
+        private bool isErrorState = false;
+        private decimal displayValue = Constants.Numeric.INITIAL_VALUE;
+        private string lastUserTypedRaw = Constants.Numeric.ZERO_VALUE;
+        private bool lastActionWasPercent = false;
+
+        private float defaultFontSize;
+        private float defaultExpressionFontSize;
+
+        private Button[] disabledButtonsOnError;
+
+        private enum OperatorType { NON, ADD, SUBTRACT, MULTIPLY, DIVIDE }
+        private OperatorType currentOperatorType = OperatorType.NON;
+
+        private enum ErrorCode { Success, Undefined, DivideByZero }
+
+        public Form1()
+        {
+            InitializeComponent();
+            this.Text = "電卓";
+            this.MaximumSize = this.Size;
+            this.MinimumSize = this.Size;
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+
+            disabledButtonsOnError = new Button[]
+            {
+                btnDot, btnTogglesign, btnPercent, btnPlus,
+                btnMinus, btnMultiply, btnDivide
+            };
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            textResult.Text = Constants.Numeric.ZERO_VALUE;
+            textOverwrite = true;
+
+            textResult.Font = new Font(textResult.Font.FontFamily, Constants.FontSize.RESULT_DISPLAY_BASE, textResult.Font.Style);
+            textExpression.Font = new Font(textExpression.Font.FontFamily, Constants.FontSize.EXPRESSION_DISPLAY_BASE, textExpression.Font.Style);
+
+            defaultFontSize = textResult.Font.Size;
+            defaultExpressionFontSize = textExpression.Font.Size;
+
+            textResult.ReadOnly = true;
+            textResult.TextAlign = HorizontalAlignment.Right;
+            textResult.BorderStyle = BorderStyle.None;
+
+            textExpression.ReadOnly = true;
+            textExpression.TextAlign = HorizontalAlignment.Right;
+            textExpression.BorderStyle = BorderStyle.None;
+
+            btnPlus.Text = Constants.Symbol.ADD;
+            btnMinus.Text = Constants.Symbol.SUBTRACT;
+            btnMultiply.Text = Constants.Symbol.MULTIPLY;
+            btnDivide.Text = Constants.Symbol.DIVIDE;
+        }
+
+        // ========== 入力処理 ==========
+
+        private void btnNum_Click(object sender, EventArgs e)
+        {
+            if (isErrorState) ResetCalculatorState();
+            if (lastActionWasPercent) return;
+            OnDigitButton(((Button)sender).Text);
+        }
+
+        private void btnDot_Click(object sender, EventArgs e)
+        {
+            if (lastActionWasPercent) return;
+            OnDotButton();
+        }
+
+        private void btnOperation_Click(object sender, EventArgs e)
+        {
+            string op = ((Button)sender).Text;
+            OperatorType type = OperatorType.NON;
+            if (op == Constants.Symbol.ADD) type = OperatorType.ADD;
+            else if (op == Constants.Symbol.SUBTRACT) type = OperatorType.SUBTRACT;
+            else if (op == Constants.Symbol.MULTIPLY) type = OperatorType.MULTIPLY;
+            else if (op == Constants.Symbol.DIVIDE) type = OperatorType.DIVIDE;
+            OnOperatorButton(type);
+        }
+
+        private void btnEnter_Click(object sender, EventArgs e) => OnEqualsButton();
+        private void btnPercent_Click(object sender, EventArgs e) => OnPercentButton();
+        private void btnClearEntry_Click(object sender, EventArgs e) => OnClearEntryButton();
+        private void btnClear_Click(object sender, EventArgs e) => ResetAllState();
+        private void btnBack_Click(object sender, EventArgs e) => OnBackspaceButton();
+        private void btnTogglesign_Click(object sender, EventArgs e) => OnToggleSignButton();
+        private void btnTopMost_Click(object sender, EventArgs e)
+        {
+            this.TopMost = !this.TopMost;
+            btnTopMost.BackColor = this.TopMost ? Color.LightBlue : SystemColors.Control;
+        }
+
+        // ========== 計算処理 ==========
+
+        private static ErrorCode TryDivide(decimal left, decimal right, out decimal result)
+        {
+            if (right == 0m)
+            {
+                result = 0m;
+                return left == 0m ? ErrorCode.Undefined : ErrorCode.DivideByZero;
+            }
+            result = left / right;
+            return ErrorCode.Success;
+        }
+
+        private void OnDigitButton(string digit)
+        {
+            if (textOverwrite || textResult.Text == Constants.Numeric.ZERO_VALUE)
+            {
+                textResult.Text = digit;
+                textOverwrite = false;
+            }
+            else
+            {
+                textResult.Text += digit;
+            }
+            displayValue = decimal.Parse(textResult.Text, CultureInfo.InvariantCulture);
+        }
+
+        private void OnDotButton()
+        {
+            if (!numDot)
+            {
+                textResult.Text += ".";
+                numDot = true;
+                textOverwrite = false;
+            }
+        }
+
+        private void OnOperatorButton(OperatorType type)
+        {
+            firstValue = displayValue;
+            currentOperatorType = type;
+            textExpression.Text = textResult.Text + " " + GetSymbol(type);
+            textOverwrite = true;
+            numDot = false;
+        }
+
+        private void OnEqualsButton()
+        {
+            if (currentOperatorType == OperatorType.NON) return;
+            secondValue = displayValue;
+            decimal result;
+            ErrorCode code;
+
+            switch (currentOperatorType)
+            {
+                case OperatorType.ADD:
+                    result = firstValue + secondValue;
+                    code = ErrorCode.Success;
+                    break;
+                case OperatorType.SUBTRACT:
+                    result = firstValue - secondValue;
+                    code = ErrorCode.Success;
+                    break;
+                case OperatorType.MULTIPLY:
+                    result = firstValue * secondValue;
+                    code = ErrorCode.Success;
+                    break;
+                case OperatorType.DIVIDE:
+                    code = TryDivide(firstValue, secondValue, out result);
+                    break;
+                default:
+                    result = secondValue;
+                    code = ErrorCode.Success;
+                    break;
+            }
+
+            if (code == ErrorCode.DivideByZero)
+            {
+                ShowError(Constants.ErrorMessage.DIVIDE_BY_ZERO);
+                return;
+            }
+            if (code == ErrorCode.Undefined)
+            {
+                ShowError(Constants.ErrorMessage.UNDEFINED);
+                return;
+            }
+
+            displayValue = result;
+            DisplayNumber(displayValue);
+            textExpression.Text = "";
+            currentOperatorType = OperatorType.NON;
+            textOverwrite = true;
+        }
+
+        private void OnPercentButton()
+        {
+            if (currentOperatorType == OperatorType.NON) return;
+            decimal percentValue = firstValue * (displayValue * Constants.Numeric.PERCENT_MULTIPLY);
+            displayValue = percentValue;
+            DisplayNumber(displayValue);
+            textOverwrite = true;
+            lastActionWasPercent = true;
+        }
+
+        private void OnToggleSignButton()
+        {
+            displayValue = -displayValue;
+            DisplayNumber(displayValue);
+        }
+
+        private void OnClearEntryButton()
+        {
+            textResult.Text = Constants.Numeric.ZERO_VALUE;
+            displayValue = 0m;
+            textOverwrite = true;
+            isErrorState = false;
+            foreach (var btn in disabledButtonsOnError) btn.Enabled = true;
+        }
+
+        private void OnBackspaceButton()
+        {
+            if (isErrorState) return;
+            if (textResult.Text.Length > 1)
+            {
+                textResult.Text = textResult.Text.Substring(0, textResult.Text.Length - 1);
+            }
+            else
+            {
+                textResult.Text = Constants.Numeric.ZERO_VALUE;
+            }
+            displayValue = decimal.Parse(textResult.Text, CultureInfo.InvariantCulture);
+        }
+
+        private void ResetAllState()
+        {
+            firstValue = 0m;
+            secondValue = 0m;
+            displayValue = 0m;
+            textResult.Text = Constants.Numeric.ZERO_VALUE;
+            textExpression.Text = "";
+            currentOperatorType = OperatorType.NON;
+            textOverwrite = true;
+            isErrorState = false;
+            foreach (var btn in disabledButtonsOnError) btn.Enabled = true;
+        }
+
+        private void ResetCalculatorState()
+        {
+            displayValue = 0m;
+            textResult.Text = Constants.Numeric.ZERO_VALUE;
+            textOverwrite = true;
+            isErrorState = false;
+            foreach (var btn in disabledButtonsOnError) btn.Enabled = true;
+        }
+
+        private void ShowError(string message)
+        {
+            textResult.Text = message;
+            isErrorState = true;
+            foreach (var btn in disabledButtonsOnError) btn.Enabled = false;
+        }
+
+        private void DisplayNumber(decimal value)
+        {
+            string str;
+            if (Math.Abs(value) < 1e-9m || Math.Abs(value) > 1e16m)
+                str = value.ToString("e16", CultureInfo.InvariantCulture);
+            else
+                str = value.ToString("G17", CultureInfo.InvariantCulture);
+
+            textResult.Text = str;
+            AutoFitResultFont();
+        }
+
+        private void AutoFitResultFont()
+        {
+            var trialTextSize = TextRenderer.MeasureText(textResult.Text, textResult.Font);
+            if (Math.Abs(textResult.Font.Size - defaultFontSize) > Constants.FontSize.SIZE_EPSILON)
+            {
+                float size = defaultFontSize;
+                while (trialTextSize.Width > textResult.Width && size > Constants.FontSize.MIN_LIMIT)
+                {
+                    size -= Constants.FontSize.REDUCTION_STEP;
+                    textResult.Font = new Font(textResult.Font.FontFamily, size, textResult.Font.Style);
+                    trialTextSize = TextRenderer.MeasureText(textResult.Text, textResult.Font);
+                }
+            }
+        }
+
+        private string GetSymbol(OperatorType type)
+        {
+            return type switch
+            {
+                OperatorType.ADD => Constants.Symbol.ADD,
+                OperatorType.SUBTRACT => Constants.Symbol.SUBTRACT,
+                OperatorType.MULTIPLY => Constants.Symbol.MULTIPLY,
+                OperatorType.DIVIDE => Constants.Symbol.DIVIDE,
+                _ => ""
+            };
+        }
+    }
+}
