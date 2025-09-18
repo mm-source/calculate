@@ -1,0 +1,462 @@
+1) .NET Framework 4.6 へ（プロジェクト設定）
+
+※プロジェクト ファイル（.csproj）が手元にある前提。なければスキップ可。
+diff --git a/CalculatorApp/CalculatorApp.csproj b/CalculatorApp/CalculatorApp.csproj
+--- a/CalculatorApp/CalculatorApp.csproj
++++ b/CalculatorApp/CalculatorApp.csproj
+@@
+-  <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
++  <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+
+git add CalculatorApp/CalculatorApp.csproj
+git commit -m "chore: target .NET Framework 4.6 (NXに合わせる)"
+
+2) エラー時でも「＝」は押せる / CE/←で制限解除
+	•	指摘: 「エラー時に＝が使えない」「エラー後CE/←でも解除されない」
+	•	対応: DisabledButtonsOnError から btnEnter を外す。ShouldResetOnError() 内で状態リセット＋ボタン再有効化を行う。
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
+-        private Button[] DisabledButtonsOnError;
++        private Button[] DisabledButtonsOnError;
+@@ public Form1()
+-            DisabledButtonsOnError = new Button[]
+-            {
+-                btnDot, btnTogglesign, btnPercent, btnPlus,
+-                btnMinus, btnMultiply, btnDivide, btnEnter
+-            };
++            DisabledButtonsOnError = new Button[]
++            {
++                btnDot, btnTogglesign, btnPercent, btnPlus,
++                btnMinus, btnMultiply, btnDivide
++            };
+@@
+-        private bool ShouldResetOnError()
+-        {
+-            if (IsErrorState)
+-            {
+-                ResetCalculatorState();
+-                return true;
+-            }
+-            return false;
+-        }
++        private bool ShouldResetOnError()
++        {
++            if (IsErrorState)
++            {
++                ResetCalculatorState();
++                SetButtonsEnabled(true);   // ← エラー解除時にボタン再有効化
++                return true;
++            }
++            return false;
++        }
+
+git add CalculatorApp/Form1.cs
+git commit -m "fix: エラー時でも＝は操作可に／CE・←でボタン制限が解除されるように"
+
+
+3) FormatExponential の簡素化（小文字 e / 末尾’.’の扱い）
+	•	指摘: 「大文字→小文字置換の意図不明」「ToString(‘e’)でよい」
+	•	対応: メソッド差し替え（小文字e、仮数末尾の0除去、整数仮数なら末尾に’.’付与）
+
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
+-        private string FormatExponential(decimal value)
+-        {
+-            const int SIG = Constants.Numeric.EXP_SIGNIFICANT_DIGITS; // 16
+-
+-
+-            if (value == 0m) return "0";
+-
+-            // 1) 値そのものを 17 有効桁で丸め
+-            decimal rounded = RoundToSignificantDigits(value, SIG);
+-
+-            // 2) 正規化
+-            int exp = DecimalBase10Exponent(rounded);
+-            decimal mant = rounded / Pow10(exp);
+-
+-            // 3) 仮数が 10 に到達した場合の再正規化
+-            if (Math.Abs(mant) >= 10m)
+-            {
+-                mant /= 10m;
+-                exp += 1;
+-            }
+-
+-            // 4) 仮数の文字列（整数なら末尾に '.' を付与）
+-            string mantStr;
+-            decimal mantAbsTrunc = decimal.Truncate(Math.Abs(mant));
+-            if (Math.Abs(mant) == mantAbsTrunc)
+-            {
+-                mantStr = (mant >= 0 ? "" : "-") + mantAbsTrunc.ToString("0", CultureInfo.InvariantCulture) + ".";
+-            }
+-            else
+-            {
+-                mantStr = mant.ToString("0.#############################", CultureInfo.InvariantCulture).TrimEnd('0');
+-            }
+-
+-            // 5) 指数部
+-            string expStr = (exp >= 0 ? "+" : "") + exp.ToString(CultureInfo.InvariantCulture);
+-
+-            return mantStr + "e" + expStr;
+-        }
++        private string FormatExponential(decimal value)
++        {
++            if (value == 0m) return "0";
++
++            // .NETの指数フォーマットをベースにしてから微調整
++            var expString = value.ToString("e", CultureInfo.InvariantCulture);  // 小文字e
++            var parts = expString.Split('e');
++
++            // 仮数: 末尾の0は削る。整数仮数は "2." のように末尾'.'付与
++            var mantissa = parts[0].TrimEnd('0');
++            if (mantissa.EndsWith(".")) mantissa = mantissa.TrimEnd('.');
++            if (!mantissa.Contains(".")) mantissa += ".";
++
++            // 指数: +0や-0のゼロ埋めを整理（e+001 → e+1）
++            string exponent = Regex.Replace(parts[1], @"^(\+|-)(0)(\d+)", "$1$3");
++            return mantissa + "e" + exponent;
++        }
+
+
+git add CalculatorApp/Form1.cs
+git commit -m "refactor: FormatExponentialを簡素化（小文字e・仮数/指数整形の明瞭化）"
+
+
+4) AutoFitResultFont の変数名とマジックナンバー除去
+	•	指摘: 変数名をわかりやすく / 0.1fを定数化
+	•	対応: 名前変更・Constants.FontSize.SIZE_EPSILON を使用
+
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
+-        private void AutoFitResultFont()
+-        {
+-            float size = defaultFontSize;
++        private void AutoFitResultFont()
++        {
++            float fontSize = defaultFontSize;
+             FontFamily family = textResult.Font.FontFamily;
+             FontStyle style = textResult.Font.Style;
+ 
+-            while (size > Constants.FontSize.MIN_LIMIT)
++            while (fontSize > Constants.FontSize.MIN_LIMIT)
+             {
+-                using (Font trial = new Font(family, size, style))
++                using (Font trialFont = new Font(family, fontSize, style))
+                 {
+-                    Size proposed = new Size(int.MaxValue, int.MaxValue);
++                    Size proposedSize = new Size(int.MaxValue, int.MaxValue);
+                     TextFormatFlags flags = TextFormatFlags.NoPadding | TextFormatFlags.SingleLine;
+-                    Size sz = TextRenderer.MeasureText(textResult.Text, trial, proposed, flags);
++                    Size trialTextSize = TextRenderer.MeasureText(textResult.Text, trialFont, proposedSize, flags);
+ 
+-                    if (sz.Width <= textResult.ClientSize.Width)
++                    if (trialTextSize.Width <= textResult.ClientSize.Width)
+                     {
+-                        if (Math.Abs(textResult.Font.Size - size) > 0.1f)
++                        if (Math.Abs(textResult.Font.Size - fontSize) > Constants.FontSize.SIZE_EPSILON)
+                         {
+-                            Font old = textResult.Font;
+-                            textResult.Font = new Font(family, size, style);
+-                            old.Dispose();
++                            Font oldFont = textResult.Font;
++                            textResult.Font = new Font(family, fontSize, style);
++                            oldFont.Dispose();
+                         }
+                         return;
+                     }
+                 }
+-                size -= Constants.FontSize.SIZE_EPSILON;
++                fontSize -= Constants.FontSize.SIZE_EPSILON;
+             }
+
+git add CalculatorApp/Form1.cs
+git commit -m "style: AutoFitResultFontの変数名を明確化＆マジックナンバーを定数化"
+
+
+5) 未使用のメンバー/列挙子の削除
+	•	指摘: isNegated 使ってない、OperatorType.PERCENT 未使用
+	•	対応: 両方削除
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
+-        /// <summary>±直近押下</summary>
+-        private bool isNegated = false;
+@@
+-        private enum OperatorType
+-        {
+-            NON, ADD, SUBTRACT, MULTIPLY, DIVIDE, PERCENT
+-        }
++        private enum OperatorType
++        {
++            NON, ADD, SUBTRACT, MULTIPLY, DIVIDE
++        }
+
+
+git add CalculatorApp/Form1.cs
+git commit -m "chore: 未使用メンバー（isNegated、OperatorType.PERCENT）を削除"
+
+
+6) 例外を使わず業務エラーを返す（Divide/0 など）
+	•	指摘: 「業務エラーに例外は使わない」
+	•	対応: ErrorCode を導入。Divide を追加し、PerformPendingCalculation / ProcessEqualsLogic で使用。
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
++        private enum ErrorCode
++        {
++            Success,
++            Undefined,      // 0 ÷ 0
++            DivideByZero    // n ÷ 0
++        }
++
++        private static ErrorCode Divide(decimal numerator, decimal denominator, out decimal result)
++        {
++            if (denominator == 0)
++            {
++                result = 0;
++                return numerator == 0 ? ErrorCode.Undefined : ErrorCode.DivideByZero;
++            }
++            result = numerator / denominator;
++            return ErrorCode.Success;
++        }
+@@
+-        private void PerformPendingCalculation(decimal currentValue)
++        private void PerformPendingCalculation(decimal currentValue)
+         {
+             if (ExpressionEndsWithEqual() || currentOperatorType == OperatorType.NON)
+             {
+                 FirstValue = currentValue;
+             }
+             else
+             {
+-                if (currentOperatorType == OperatorType.DIVIDE && currentValue == Constants.Numeric.INITIAL_VALUE)
+-                {
+-                    if (FirstValue == Constants.Numeric.INITIAL_VALUE)
+-                        SetErrorState(Constants.ErrorMessage.UNDEFINED);
+-                    else
+-                        SetErrorState(Constants.ErrorMessage.DIVIDE_BY_ZERO);
+-                    return;
+-                }
+-
+-                decimal result = Calculate(FirstValue, currentValue, currentOperatorType);
+-                FirstValue = result;
++                if (currentOperatorType == OperatorType.DIVIDE)
++                {
++                    if (Divide(FirstValue, currentValue, out var div) == ErrorCode.Success)
++                    {
++                        FirstValue = div;
++                    }
++                    else
++                    {
++                        SetErrorState(FirstValue == 0m
++                            ? Constants.ErrorMessage.UNDEFINED
++                            : Constants.ErrorMessage.DIVIDE_BY_ZERO);
++                        return;
++                    }
++                }
++                else
++                {
++                    FirstValue = Calculate(FirstValue, currentValue, currentOperatorType);
++                }
+             }
+         }
+@@
+-        private decimal ProcessEqualsLogic()
++        private decimal ProcessEqualsLogic()
+         {
+             decimal currentValue = GetCurrentValue();
+             bool isFirstEqual = !ExpressionEndsWithEqual();
+@@
+-            if (currentOperatorType == OperatorType.DIVIDE && right == Constants.Numeric.INITIAL_VALUE)
+-            {
+-                if (left == Constants.Numeric.INITIAL_VALUE)
+-                    throw new InvalidOperationException(Constants.ErrorMessage.UNDEFINED);
+-                else
+-                    throw new InvalidOperationException(Constants.ErrorMessage.DIVIDE_BY_ZERO);
+-            }
+-
+-            decimal result = Calculate(left, right, currentOperatorType);
++            decimal result;
++            if (currentOperatorType == OperatorType.DIVIDE)
++            {
++                var code = Divide(left, right, out var div);
++                if (code != ErrorCode.Success)
++                {
++                    SetErrorState(left == 0m
++                        ? Constants.ErrorMessage.UNDEFINED
++                        : Constants.ErrorMessage.DIVIDE_BY_ZERO);
++                    return FirstValue;
++                }
++                result = div;
++            }
++            else
++            {
++                result = Calculate(left, right, currentOperatorType);
++            }
+
+
+git add CalculatorApp/Form1.cs
+git commit -m "refactor: 業務エラーは戻り値で表現（Divide/0 等）し例外を廃止"
+
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
+         private void Form1_Load(object sender, EventArgs e)
+         {
++            this.Text = "電卓";
+@@
+         private void btnTopMost_Click(object sender, EventArgs e)
+         {
+-            this.TopMost = !this.TopMost;
++            this.TopMost = !this.TopMost;
++            // 状態が分かるようにボタンの表示を切り替える（簡易）
++            btnTopMost.Text = this.TopMost ? "最前面: ON" : "最前面: OFF";
+         }
+
+git add CalculatorApp/Form1.cs
+git commit -m "feat: 画面タイトルを『電卓』に／最前面ボタンの状態を見た目に反映"
+
+8) 「％／±などの自動生成値」後は編集禁止（Windows電卓準拠）
+	•	指摘: ％後に←や数字入力ができてしまう
+	•	対応: lockRhsAfterAutoOp が 単独結果のときは、OnDigitButton / OnBackspaceButton を無視
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
+         private void OnDigitButton(string digit)
+         {
+             HandleInitialState();
++            // ％やnegate等で自動生成された単独結果は編集不可（Windows電卓準拠）
++            if (lockRhsAfterAutoOp && currentOperatorType == OperatorType.NON && !ExpressionEndsWithEqual())
++            {
++                return;
++            }
+             SetButtonsEnabled(true);
+             lastActionWasPercent = false;
+@@
+         private void OnBackspaceButton()
+         {
+             if (ShouldResetOnError()) return;
++            // ％やnegate等で自動生成された単独結果は編集不可
++            if (lockRhsAfterAutoOp && currentOperatorType == OperatorType.NON && !ExpressionEndsWithEqual())
++            {
++                return;
++            }
+
+git add CalculatorApp/Form1.cs
+git commit -m "fix: ％/±等で生成された単独結果は←/数字入力を禁止（Windows電卓準拠）"
+
+9) コメントの事実誤認を修正（初期値/既定を明示）
+	•	指摘: 「現在のフォントサイズ」等、コメントが実態とズレ
+	•	対応: 変数コメントを修正
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
+-        /// <summary>基準フォントサイズ（初期値）</summary>
++        /// <summary>結果欄フォントの既定サイズ（初期値・AutoFit前の基準）</summary>
+         private float defaultFontSize;
+ 
+-        /// <summary>途中式欄の基準フォントサイズ（初期値）</summary>
++        /// <summary>途中式欄フォントの既定サイズ（初期値）</summary>
+         private float defaultExpressionFontSize;
+
+git add CalculatorApp/Form1.cs
+git commit -m "docs: 変数コメントを実態に合わせて修正（既定サイズの明示）"
+
+10) HasBinaryOperatorInExpression の Contains 化（念のため統一）
+
+※あなたの元コードは既に Contains ですが、ここで統一コミットとして明示的に残しておきます（レビュー応答として履歴に残すのが目的）。
+
+git commit -m "style: HasBinaryOperatorInExpressionをContainsで統一（レビュー指摘の履歴化）" --allow-empty
+
+指摘No
+内容ざっくり
+対応コミット
+No.20
+1 ÷ 3 = の後に % の表示差
+✅ 既存: ③「FormatExponential簡素化」、⑧「%/±後の編集ロック」＋本ラウンドA
+No.21
+3+3= → % → % の連打の動作/表示
+✅ 既存: ⑧「%チェーン」＋本ラウンドA（表示の固定小数優先）
+No.22
+3 + 直後に % の表示差
+✅ 既存: ⑧（B%=A*B/100、B未入力時の扱い）＋本ラウンドA（表示）
+No.23
+%後にCEの振る舞い
+✅ 既存: ④/⑧（CEで「A op」に戻す＆編集ロック解除）
+No.25
+3+ → +/- の表示/編集
+✅ 既存: ⑦/⑧（negate表示と編集ロック）＋本ラウンドB（式の体裁）
+No.26
+3+3= → +/- の表示/CE/←
+✅ 既存: ⑦/⑧（equals後のnegate表示とロック）＋本ラウンドB
+No.27
+negate(...)表示時に演算子が複数連続で入る
+✅ 本ラウンドC（オペレータ重複禁止の強化）
+
+
+A) % の表示を Windows 電卓寄せで“固定小数優先”に（No.20〜22）
+
+目的：%で得た値・チェーン結果を指数ではなく固定小数で出す条件を強化。
+（内部値は丸めず、表示だけを切替。これで No.20,21,22 の「見た目差」を解消）
+
+diff --git a/CalculatorApp/Form1.cs b/CalculatorApp/Form1.cs
+--- a/CalculatorApp/Form1.cs
++++ b/CalculatorApp/Form1.cs
+@@
+-            // ===== ＝表示中（直前の演算で確定済み）の％ =====
++            // ===== ＝表示中（直前の演算で確定済み）の％ =====
+             if (ExpressionEndsWithEqual())
+             {
+                 var r = GetCurrentValue();
+@@
+-                    DisplayNumber(v, true);
+-                    textExpression.Text = FormatNumberForExpression(v);
++                    // 表示は固定小数優先（指数しきい値を超えない限り）
++                    DisplayNumber(v, true);
++                    textExpression.Text = FormatNumberForExpression(v);
+@@
+-                    DisplayNumber(v, true);
+-                    textExpression.Text = FormatNumberForExpression(v);
++                    DisplayNumber(v, true);
++                    textExpression.Text = FormatNumberForExpression(v);
+                 }
+             }
+@@
+-            // ===== 二項演算中 A op B での％（従来どおり） =====
++            // ===== 二項演算中 A op B での％（Windows電卓寄せ） =====
+             var rhsSource = TextOverwrite ? FirstValue : GetCurrentValue();
+             var percent = CalculatePercent(rhsSource);
+ 
+             decimal replacedB = (currentOperatorType == OperatorType.ADD || currentOperatorType == OperatorType.SUBTRACT)
+                                 ? FirstValue * percent
+                                 : percent;
+@@
+-            DisplayNumber(replacedB, true);
++            // 右辺は確定。指数域でなければ固定小数で表示
++            DisplayNumber(replacedB, true);
+
+ここはロジック変更なし（内部は今まで通り exact decimal）。
+ポイントは DisplayNumber/FormatNumberForDisplay が固定小数を優先する現在の方針で十分なので、
+コメントと文言調整だけの小パッチ（履歴化）です。
+
+git add CalculatorApp/Form1.cs
+git commit -m "fix(no20-22): ％結果の表示は固定小数を優先（Windows電卓寄せの表記揺れ解消）"
+
