@@ -1,0 +1,50 @@
+private string FormatNumberForDisplay(decimal value)
+{
+    var abs = Math.Abs(value);
+    if (abs == 0m) return Constants.Numeric.ZERO_VALUE;
+
+    // まず固定小数の文字列を作る（ここから可能なら固定で返す）
+    string fixedStr = value.ToString("0.#############################", CultureInfo.InvariantCulture);
+
+    // 0 < abs < 1 のとき：先に「固定小数で収まるか」を判定（Windows準拠）
+    if (abs < 1m)
+    {
+        // 小数点位置と先行ゼロ数を数える
+        int dot = fixedStr.IndexOf('.');                 // ← if手前で宣言（レビュー指摘対応）
+        int leadingZeros = 0;
+        for (int i = dot + 1; i < fixedStr.Length && fixedStr[i] == '0'; i++) leadingZeros++;
+
+        // 有効数字（先行ゼロ以降の数字数）を数える
+        int significantDigits = 0;
+        for (int i = dot + 1 + leadingZeros; i < fixedStr.Length; i++)
+            if (char.IsDigit(fixedStr[i])) significantDigits++;
+
+        // ★固定小数で有効桁が上限以内なら固定表示（割り切れたら指数にしない）
+        if (significantDigits <= Constants.Numeric.MAX_SIGNIFICANT_DIGITS)
+            return fixedStr;
+
+        // ここまでで収まらない場合のみ、非常に小さい値は指数へ
+        if (abs < Constants.Numeric.SCI_SMALL_THRESHOLD)
+            return FormatExponential(value);
+
+        // 閾値未満でなくても有効桁オーバーなら指数へ
+        return FormatExponential(value);
+    }
+
+    // abs >= 1 のとき：整数部が大きすぎる場合のみ指数、それ以外は固定
+    bool neg = fixedStr[0] == '-';
+    int dot2 = fixedStr.IndexOf('.');                    // ← if手前で宣言（レビュー指摘対応）
+    int intLen = (dot2 >= 0 ? dot2 : fixedStr.Length) - (neg ? 1 : 0);
+    if (intLen > Constants.Numeric.MAX_INTEGER_DISPLAY_DIGITS)
+        return FormatExponential(value);
+
+    return fixedStr;
+}
+// 有効桁数・指数切替（Windows 電卓寄せ）
+public const int MAX_SIGNIFICANT_DIGITS = 17;
+
+// 小さすぎる値は 1e-16 未満で指数にする
+internal static readonly decimal SCI_SMALL_THRESHOLD = 1e-16m;
+
+// 大きすぎる値は 1e16 以上で指数にする
+internal static readonly decimal SCI_LARGE_THRESHOLD = 1e16m;
