@@ -1,0 +1,8 @@
+// 変更前
+decimal rhsSource = m_textOverwrite ? m_firstValue : GetCurrentValue();
+
+// 変更後：直前が % のときは常に“現在表示中の右辺”を基準にする
+decimal rhsSource =
+    (m_lastActionWasPercent && m_currentOperatorType != OperatorType.NON)
+        ? GetCurrentValue()
+        : (m_textOverwrite ? m_firstValue : GetCurrentValue());
